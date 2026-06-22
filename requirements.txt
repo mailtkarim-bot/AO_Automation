@@ -1,0 +1,48 @@
+# ===== Web / API =====
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20
+pydantic==2.10.4
+pydantic-settings==2.7.1
+
+# ===== Base de données =====
+sqlalchemy==2.0.36
+alembic==1.14.0
+psycopg[binary]==3.2.3
+pgvector==0.3.6
+
+# ===== Mistral IA =====
+mistralai==1.4.0
+# Abstraction LLM locale (vLLM/Ollama, compatible OpenAI)
+openai==1.59.6
+
+# ===== Parsing documents (DCE : PDF, DOCX, ZIP) =====
+python-magic==0.4.27; sys_platform != "win32"
+# PDF : extraction texte + structure
+pypdf==5.1.0
+pdfplumber==0.11.4
+# DOCX
+python-docx==1.1.2
+# Tableurs (BPU/DPGF souvent en xlsx)
+openpyxl==3.1.5
+pandas==2.2.3
+
+# ===== Stockage S3 (MinIO) =====
+boto3==1.35.92
+
+# ===== Files asynchrones =====
+celery[redis]==5.4.0
+redis==5.2.1
+
+# ===== Utilitaires =====
+python-dotenv==1.0.1
+httpx==0.28.1
+tenacity==9.0.0
+loguru==0.7.3
+orjson==3.10.12
+PyYAML==6.0.2
+
+# ===== Tests =====
+pytest==8.3.4
+pytest-asyncio==0.25.0
+httpx==0.28.1

@@ -1,0 +1,65 @@
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+build/
+dist/
+pip-wheel-metadata/
+.python-version
+.venv/
+venv/
+
+# ===== Env / secrets =====
+.env
+.env.*
+!.env.example
+*.local
+secrets/
+*.key
+*.pem
+
+# ===== IDE =====
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# ===== Données & volumes =====
+data/
+volumes/
+uploads/
+storage/
+*.db
+*.sqlite3
+alembic/versions/__pycache__/
+
+# ===== Tests =====
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# ===== Frontend =====
+node_modules/
+.next/
+out/
+npm-debug.log*
+
+# ===== Archives =====
+*.tar.gz
+*.zip
+*.rar
+
+# ===== Logs =====
+*.log
+logs/
+
+# ===== OS =====
+Thumbs.db
+desktop.ini

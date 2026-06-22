@@ -1,0 +1,121 @@
+# ===== Batião — Stack on-prem complète =====
+# Démarre en une commande : docker compose up -d
+# Tout reste local, aucune donnée ne sort de l'infra du client.
+
+services:
+
+  # ---------- Base de données (relationnel + vectoriel) ----------
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: batiao-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-batiao}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-batiao}
+      POSTGRES_DB: ${POSTGRES_DB:-batiao}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"   # En prod on-prem, restreindre à 127.0.0.1
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-batiao}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---------- Stockage fichiers (S3-compatible) ----------
+  minio:
+    image: minio/minio:latest
+    container_name: batiao-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-batiao}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-batiao-super-secret}
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9000:9000"   # API S3
+      - "9001:9001"   # console web
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  # Création automatique du bucket au démarrage
+  minio-init:
+    image: minio/mc:latest
+    container_name: batiao-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      sleep 2 ;
+      mc alias set local http://minio:9000 ${MINIO_ROOT_USER:-batiao} ${MINIO_ROOT_PASSWORD:-batiao-super-secret} ;
+      mc mb -p local/${MINIO_BUCKET:-batiao-docs} || true ;
+      mc anonymous set download local/${MINIO_BUCKET:-batiao-docs} || true ;
+      echo 'Bucket prêt.' ;
+      "
+    restart: "no"
+
+  # ---------- Files asynchrones (parsing long, embeddings) ----------
+  redis:
+    image: redis:7-alpine
+    container_name: batiao-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # ---------- API backend (FastAPI) ----------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: batiao-backend
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app        # dev : hot reload
+      - ./data/uploads:/data/uploads
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+
+  # ---------- UI Streamlit (M0–M3) ----------
+  streamlit:
+    build:
+      context: ./frontend_streamlit
+      dockerfile: Dockerfile
+    container_name: batiao-streamlit
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      - backend
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./frontend_streamlit:/app
+    command: streamlit run app.py --server.port=8501 --server.address=0.0.0.0
+
+volumes:
+  db_data:
+  minio_data:
+  redis_data:
