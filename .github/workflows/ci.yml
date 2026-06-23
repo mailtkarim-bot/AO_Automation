@@ -10,21 +10,6 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: ankane/pgvector:latest
-        env:
-          POSTGRES_USER: batiao
-          POSTGRES_PASSWORD: batiao
-          POSTGRES_DB: batiao
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -42,6 +27,7 @@ jobs:
       - name: Verify Alembic config exists
         run: |
           test -f alembic.ini && echo "Alembic OK" || echo "Missing alembic.ini"
+          test -d alembic/versions && ls alembic/versions/*.py && echo "Migrations OK"
 
       - name: Lint with Ruff
         run: |
