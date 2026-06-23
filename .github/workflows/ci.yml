@@ -47,17 +47,15 @@ jobs:
       - name: Run Alembic migrations
         env:
           DATABASE_URL: postgresql+psycopg://batiao:batiao@localhost:5432/batiao
-        run: |
-          cd backend && alembic upgrade head
+        run: alembic upgrade head
 
       - name: Run tests
         env:
           DATABASE_URL: postgresql+psycopg://batiao:batiao@localhost:5432/batiao
           REDIS_URL: redis://localhost:6379/0
-        run: |
-          cd backend && pytest tests/ -v --tb=short
+        run: pytest tests/ -v --tb=short
 
       - name: Lint with Ruff
         run: |
           pip install ruff
-          ruff check backend/app/
+          ruff check app/
